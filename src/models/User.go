@@ -17,17 +17,17 @@ type User struct {
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 }
 
-func (user *User) Prepare() error {
+func (user *User) Prepare(steep string) error {
 	user.format()
 
-	if err := user.validate(); err != nil {
+	if err := user.validate(steep); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (user *User) validate() error {
+func (user *User) validate(steep string) error {
 	if user.Name == "" {
 		return errors.New("The field 'name' is required")
 	}
@@ -40,7 +40,7 @@ func (user *User) validate() error {
 		return errors.New("The field 'email' is required")
 	}
 
-	if user.Password == "" {
+	if steep == "signup" && user.Password == "" {
 		return errors.New("The field 'password' is required")
 	}
 

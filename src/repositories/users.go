@@ -71,7 +71,7 @@ func (repo UserRepository) FindMany(nameOrNick string) ([]models.User, error) {
 	return users, nil
 }
 
-func (repo UserRepository) FindOne(userID uint64) (models.User, error) {
+func (repo UserRepository) FindById(userID uint64) (models.User, error) {
 	lines, err := repo.db.Query(
 		"select id, name, nick, email, createdAt from users where id = ?;",
 		userID,
@@ -89,6 +89,34 @@ func (repo UserRepository) FindOne(userID uint64) (models.User, error) {
 			&user.Name,
 			&user.Nick,
 			&user.Email,
+			&user.CreatedAt,
+		); err != nil {
+			return models.User{}, err
+		}
+	}
+
+	return user, nil
+}
+
+func (repo UserRepository) FindByEmail(userEmail string) (models.User, error) {
+	lines, err := repo.db.Query(
+		"select id, name, nick, email, password, createdAt from users where email = ?;",
+		userEmail,
+	)
+	if err != nil {
+		return models.User{}, err
+	}
+	defer lines.Close()
+
+	var user models.User
+
+	if lines.Next() {
+		if err = lines.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nick,
+			&user.Email,
+			&user.Password,
 			&user.CreatedAt,
 		); err != nil {
 			return models.User{}, err

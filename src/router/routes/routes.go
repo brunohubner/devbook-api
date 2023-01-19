@@ -18,5 +18,9 @@ func Config(r *mux.Router) *mux.Router {
 		r.HandleFunc(route.URI, route.Func).Methods(route.Method)
 	}
 
+	for _, route := range authRoutes {
+		r.HandleFunc(route.URI, route.Func).Methods(route.Method)
+	}
+
 	return r
 }

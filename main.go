@@ -9,6 +9,17 @@ import (
 	"github.com/brunohubner/devbook-api/src/router"
 )
 
+// func init() {
+// 	jwtSecret := make([]byte, 64)
+
+// 	if _, err := rand.Read(jwtSecret); err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	stringBase64 := base64.StdEncoding.EncodeToString(jwtSecret)
+// 	fmt.Println(stringBase64)
+// }
+
 func main() {
 	config.LoadEnvVars()
 

@@ -87,7 +87,7 @@ func FindOne(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	userRepository := repositories.NewUserRepository(db)
-	user, err := userRepository.FindOne(userID)
+	user, err := userRepository.FindById(userID)
 	if err != nil {
 		responses.Error(w, http.StatusInternalServerError, err)
 		return

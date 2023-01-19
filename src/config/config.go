@@ -12,6 +12,7 @@ import (
 var (
 	DbConnectionString = ""
 	Port               = 0
+	JwtSecret          []byte
 )
 
 func LoadEnvVars() {
@@ -33,4 +34,6 @@ func LoadEnvVars() {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
 	)
+
+	JwtSecret = []byte(os.Getenv("JWT_SECRET"))
 }

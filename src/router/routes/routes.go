@@ -17,6 +17,7 @@ type Route struct {
 func Config(r *mux.Router) *mux.Router {
 	includeRoutes(r, userRoutes)
 	includeRoutes(r, authRoutes)
+	includeRoutes(r, postsRoutes)
 
 	return r
 }

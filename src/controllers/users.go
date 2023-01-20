@@ -2,11 +2,13 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/brunohubner/devbook-api/src/auth"
 	"github.com/brunohubner/devbook-api/src/database"
 	"github.com/brunohubner/devbook-api/src/models"
 	"github.com/brunohubner/devbook-api/src/repositories"
@@ -104,6 +106,17 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userIDInJwt, err := auth.ExtractUserID(r)
+	if err != nil {
+		responses.Error(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if userID != userIDInJwt {
+		responses.Error(w, http.StatusForbidden, errors.New("You cannot update another user"))
+		return
+	}
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		responses.Error(w, http.StatusUnprocessableEntity, err)
@@ -143,6 +156,17 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.ParseUint(params["userId"], 10, 64)
 	if err != nil {
 		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	userIDInJwt, err := auth.ExtractUserID(r)
+	if err != nil {
+		responses.Error(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	if userID != userIDInJwt {
+		responses.Error(w, http.StatusForbidden, errors.New("You cannot delete another user"))
 		return
 	}
 

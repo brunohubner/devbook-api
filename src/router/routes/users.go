@@ -16,25 +16,25 @@ var userRoutes = []Route{
 	{
 		URI:                   "/users",
 		Method:                http.MethodGet,
-		RequireAuthentication: false,
+		RequireAuthentication: true,
 		Func:                  controllers.FindMany,
 	},
 	{
 		URI:                   "/users/{userId}",
 		Method:                http.MethodGet,
-		RequireAuthentication: false,
+		RequireAuthentication: true,
 		Func:                  controllers.FindOne,
 	},
 	{
 		URI:                   "/users/{userId}",
 		Method:                http.MethodPut,
-		RequireAuthentication: false,
+		RequireAuthentication: true,
 		Func:                  controllers.Update,
 	},
 	{
 		URI:                   "/users/{userId}",
 		Method:                http.MethodDelete,
-		RequireAuthentication: false,
+		RequireAuthentication: true,
 		Func:                  controllers.Delete,
 	},
 }

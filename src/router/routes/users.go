@@ -67,4 +67,10 @@ var userRoutes = []Route{
 		RequireAuthentication: true,
 		Func:                  controllers.UpdatePassword,
 	},
+	{
+		URI:                   "/users/{userId}/posts",
+		Method:                http.MethodGet,
+		Func:                  controllers.FindPostsByUser,
+		RequireAuthentication: true,
+	},
 }

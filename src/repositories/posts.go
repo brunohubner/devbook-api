@@ -106,3 +106,109 @@ func (repo PostRepository) FindPosts(userID uint64) ([]models.Post, error) {
 
 	return posts, nil
 }
+
+func (repo PostRepository) FindPostsByUser(userID uint64) ([]models.Post, error) {
+	lines, err := repo.db.Query(`
+		select distinct p.*, u.nick
+		from posts p
+		inner join users u on u.id = p.author_id
+		where p.author_id = ?
+		order by 1 desc;`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer lines.Close()
+
+	var posts []models.Post
+
+	for lines.Next() {
+		var post models.Post
+
+		if err = lines.Scan(
+			&post.ID,
+			&post.Title,
+			&post.Content,
+			&post.AuthorID,
+			&post.Likes,
+			&post.CreatedAt,
+			&post.AuthorNick,
+		); err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
+
+func (repo PostRepository) Update(postID uint64, post models.Post) error {
+	statement, err := repo.db.Prepare(
+		"update posts set title = ?, content = ? where id = ?;",
+	)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(post.Title, post.Content, postID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo PostRepository) Delete(postID uint64) error {
+	statement, err := repo.db.Prepare(
+		"delete from posts where id = ?;",
+	)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(postID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo PostRepository) LikeAPost(postID uint64) error {
+	statement, err := repo.db.Prepare(
+		"update posts set likes = likes + 1 where id = ?;",
+	)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(postID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo PostRepository) UnlikeAPost(postID uint64) error {
+	statement, err := repo.db.Prepare(`
+		update posts set likes =
+		CASE
+			WHEN likes > 0 THEN likes - 1
+			ELSE 0
+		END
+		where id = ?;
+	`)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(postID); err != nil {
+		return err
+	}
+
+	return nil
+}

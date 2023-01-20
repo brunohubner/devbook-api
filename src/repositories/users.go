@@ -176,3 +176,85 @@ func (repo UserRepository) FollowUser(userID, followerID uint64) error {
 
 	return nil
 }
+
+func (repo UserRepository) UnfollowUser(userID, followerID uint64) error {
+	statement, err := repo.db.Prepare(
+		"delete from followers where user_id = ? and follower_id = ?;",
+	)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(userID, followerID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo UserRepository) FindFollowers(userID uint64) ([]models.User, error) {
+	lines, err := repo.db.Query(
+		`
+			select u.id, u.name, u.nick, u.email, u.createdAt
+			from users u
+			inner join  followers f on u.id = f.follower_id
+			where f.user_id = ?
+		`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer lines.Close()
+
+	var users []models.User
+
+	for lines.Next() {
+		var user models.User
+		lines.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nick,
+			&user.Email,
+			&user.CreatedAt,
+		)
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+func (repo UserRepository) FindFollowing(userID uint64) ([]models.User, error) {
+	lines, err := repo.db.Query(
+		`
+			select u.id, u.name, u.nick, u.email, u.createdAt
+			from users u
+			inner join  followers f on u.id = f.user_id
+			where f.follower_id = ?
+		`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer lines.Close()
+
+	var users []models.User
+
+	for lines.Next() {
+		var user models.User
+		lines.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nick,
+			&user.Email,
+			&user.CreatedAt,
+		)
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}

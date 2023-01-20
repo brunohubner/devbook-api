@@ -147,7 +147,7 @@ func (repo UserRepository) Update(
 
 func (repo UserRepository) Delete(userID uint64) error {
 	statement, err := repo.db.Prepare(
-		"delete from users where id = ?",
+		"delete from users where id = ?;",
 	)
 	if err != nil {
 		return err
@@ -155,6 +155,22 @@ func (repo UserRepository) Delete(userID uint64) error {
 	defer statement.Close()
 
 	if _, err = statement.Exec(userID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo UserRepository) FollowUser(userID, followerID uint64) error {
+	statement, err := repo.db.Prepare(
+		"insert ignore into followers (user_id, follower_id) values (? , ?);",
+	)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(userID, followerID); err != nil {
 		return err
 	}
 

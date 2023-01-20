@@ -13,6 +13,7 @@ import (
 	"github.com/brunohubner/devbook-api/src/models"
 	"github.com/brunohubner/devbook-api/src/repositories"
 	"github.com/brunohubner/devbook-api/src/responses"
+	"github.com/brunohubner/devbook-api/src/security"
 	"github.com/gorilla/mux"
 )
 
@@ -106,13 +107,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIDInJwt, err := auth.ExtractUserID(r)
+	userIDInJWT, err := auth.ExtractUserID(r)
 	if err != nil {
 		responses.Error(w, http.StatusUnauthorized, err)
 		return
 	}
 
-	if userID != userIDInJwt {
+	if userID != userIDInJWT {
 		responses.Error(w, http.StatusForbidden, errors.New("You cannot update another user"))
 		return
 	}
@@ -159,13 +160,13 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIDInJwt, err := auth.ExtractUserID(r)
+	userIDInJWT, err := auth.ExtractUserID(r)
 	if err != nil {
 		responses.Error(w, http.StatusUnauthorized, err)
 		return
 	}
 
-	if userID != userIDInJwt {
+	if userID != userIDInJWT {
 		responses.Error(w, http.StatusForbidden, errors.New("You cannot delete another user"))
 		return
 	}
@@ -308,4 +309,73 @@ func FindFollowing(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responses.JSON(w, http.StatusOK, followers)
+}
+
+func UpdatePassword(w http.ResponseWriter, r *http.Request) {
+	userIDInJWT, err := auth.ExtractUserID(r)
+	if err != nil {
+		responses.Error(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	params := mux.Vars(r)
+	userID, err := strconv.ParseUint(params["userId"], 10, 64)
+	if err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if userID != userIDInJWT {
+		responses.Error(w, http.StatusForbidden, errors.New("You cannot update another user"))
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responses.Error(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	var password models.UpdatePassword
+	if err = json.Unmarshal(body, &password); err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err = password.Validate(); err != nil {
+		responses.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		responses.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	userRepository := repositories.NewUserRepository(db)
+	savedUser, err := userRepository.FindById(userID)
+	if err != nil {
+		responses.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err = security.ComparePasswords(savedUser.Password, password.CurrentPassword); err != nil {
+		responses.Error(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	newHashedPassword, err := security.HashPassword(password.NewPassword)
+	if err != nil {
+		responses.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err = userRepository.UpdatePassword(userID, string(newHashedPassword)); err != nil {
+		responses.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	responses.JSON(w, http.StatusNoContent, nil)
 }

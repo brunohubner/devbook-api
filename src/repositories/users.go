@@ -73,7 +73,7 @@ func (repo UserRepository) FindMany(nameOrNick string) ([]models.User, error) {
 
 func (repo UserRepository) FindById(userID uint64) (models.User, error) {
 	lines, err := repo.db.Query(
-		"select id, name, nick, email, createdAt from users where id = ?;",
+		"select id, name, nick, email, password, createdAt from users where id = ?;",
 		userID,
 	)
 	if err != nil {
@@ -89,6 +89,7 @@ func (repo UserRepository) FindById(userID uint64) (models.User, error) {
 			&user.Name,
 			&user.Nick,
 			&user.Email,
+			&user.Password,
 			&user.CreatedAt,
 		); err != nil {
 			return models.User{}, err
@@ -257,4 +258,23 @@ func (repo UserRepository) FindFollowing(userID uint64) ([]models.User, error) {
 	}
 
 	return users, nil
+}
+
+func (repo UserRepository) UpdatePassword(
+	userID uint64,
+	password string,
+) error {
+	statement, err := repo.db.Prepare(
+		"update users set password = ? where id = ?;",
+	)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(password, userID); err != nil {
+		return err
+	}
+
+	return nil
 }

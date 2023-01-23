@@ -1,0 +1,39 @@
+# Build
+FROM golang:1.19.5-bullseye as builder
+
+ENV APP_HOME /go/src/devbook-api
+
+RUN adduser \
+  --disabled-password \
+  --gecos "" \
+  --home "/nonexistent" \
+  --shell "/sbin/nologin" \
+  --no-create-home \
+  --uid 65532 \
+  small-user
+
+WORKDIR "$APP_HOME"
+
+COPY . .
+
+RUN go mod download
+RUN go mod verify
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o devbook-api
+
+
+# Publishing
+FROM gcr.io/distroless/static-debian11
+
+ENV PORT ${PORT}
+ENV APP_HOME /go/src/devbook-api
+
+WORKDIR "$APP_HOME"
+
+COPY --from=builder "$APP_HOME"/devbook-api .
+COPY --from=builder "$APP_HOME"/.env .
+
+# USER small-user:small-user
+
+EXPOSE $PORT
+
+CMD ["./devbook-api"]
